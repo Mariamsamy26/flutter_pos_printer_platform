@@ -1,6 +1,6 @@
 import 'dart:io';
+
 import 'package:flutter_pos_printer_platform_image_3/flutter_pos_printer_platform_image_3.dart';
-import '../flutter_pos_printer_platform_image_3.dart';
 
 enum PrinterType { bluetooth, usb, network }
 
@@ -11,14 +11,11 @@ class PrinterManager {
 
   PrinterManager._();
 
-  static final PrinterManager _instance = PrinterManager._();
+  static PrinterManager _instance = PrinterManager._();
+
   static PrinterManager get instance => _instance;
 
-  Stream<PrinterDevice> discovery({
-    required PrinterType type,
-    bool isBle = false,
-    TcpPrinterInput? model,
-  }) {
+  Stream<PrinterDevice> discovery({required PrinterType type, bool isBle = false, TcpPrinterInput? model}) {
     if (type == PrinterType.bluetooth && (Platform.isIOS || Platform.isAndroid)) {
       return bluetoothPrinterConnector.discovery(isBle: isBle);
     } else if (type == PrinterType.usb && (Platform.isAndroid || Platform.isWindows)) {
@@ -28,47 +25,32 @@ class PrinterManager {
     }
   }
 
- Future<bool> connect({
-  required PrinterType type,
-  required BasePrinterInput model,
-}) async {
-  if (type == PrinterType.bluetooth && (Platform.isIOS || Platform.isAndroid)) {
-    try {
-      var conn = await bluetoothPrinterConnector.connect(model as BluetoothPrinterInput);
-      return conn;
-    } catch (e) {
-      throw Exception('model must be type of BluetoothPrinterInput');
-    }
-  } else if (type == PrinterType.usb && (Platform.isAndroid || Platform.isWindows)) {
-    try {
-      final usbModel = model as UsbPrinterInput;
-
-      // ✅ You can log for debug purposes only
-      if (usbModel.deviceId != null && usbModel.deviceId!.startsWith('/dev/bus/usb/')) {
-        print('🖨️ Using full device path: ${usbModel.deviceId}');
-        print("🔌 Using full USB address now");
-
+  Future<bool> connect({required PrinterType type, required BasePrinterInput model}) async {
+    if (type == PrinterType.bluetooth && (Platform.isIOS || Platform.isAndroid)) {
+      try {
+        var conn = await bluetoothPrinterConnector.connect(model as BluetoothPrinterInput);
+        return conn;
+      } catch (e) {
+        throw Exception('model must be type of BluetoothPrinterInput');
       }
-
-      var conn = await usbPrinterConnector.connect(usbModel);
-      return conn;
-    } catch (e) {
-      throw Exception('model must be type of UsbPrinterInput');
-    }
-  } else {
-    try {
-      var conn = await tcpPrinterConnector.connect(model as TcpPrinterInput);
-      return conn;
-    } catch (e) {
-      throw Exception('model must be type of TcpPrinterInput');
+    } else if (type == PrinterType.usb && (Platform.isAndroid || Platform.isWindows)) {
+      try {
+        var conn = await usbPrinterConnector.connect(model as UsbPrinterInput);
+        return conn;
+      } catch (e) {
+        throw Exception('model must be type of UsbPrinterInput');
+      }
+    } else {
+      try {
+        var conn = await tcpPrinterConnector.connect(model as TcpPrinterInput);
+        return conn;
+      } catch (e) {
+        throw Exception('model must be type of TcpPrinterInput');
+      }
     }
   }
-}
 
-  Future<bool> disconnect({
-    required PrinterType type,
-    int? delayMs,
-  }) async {
+  Future<bool> disconnect({required PrinterType type, int? delayMs}) async {
     if (type == PrinterType.bluetooth && (Platform.isIOS || Platform.isAndroid)) {
       return await bluetoothPrinterConnector.disconnect();
     } else if (type == PrinterType.usb && (Platform.isAndroid || Platform.isWindows)) {
@@ -78,10 +60,7 @@ class PrinterManager {
     }
   }
 
-  Future<bool> send({
-    required PrinterType type,
-    required List<int> bytes,
-  }) async {
+  Future<bool> send({required PrinterType type, required List<int> bytes}) async {
     if (type == PrinterType.bluetooth && (Platform.isIOS || Platform.isAndroid)) {
       return await bluetoothPrinterConnector.send(bytes);
     } else if (type == PrinterType.usb && (Platform.isAndroid || Platform.isWindows)) {
