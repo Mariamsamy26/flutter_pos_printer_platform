@@ -112,7 +112,7 @@ fun selectDevice(vendorId: Int?, productId: Int?, deviceId: String?): Boolean {
         }
 
         return if (target != null) {
-            Log.v(LOG_TAG, "✅ Request for device: address=${target.deviceId}, vendor_id=${target.vendorId}, product_id=${target.productId}")
+            Log.v(LOG_TAG, "✅ Request for device: address=${target.deviceId}, vendor_id=${target.vendorId}, product_id=${target.productId} device_id=${target.deviceId}")
             mUSBManager!!.requestPermission(target, mPermissionIndent)
             state = STATE_USB_CONNECTING
             mHandler?.obtainMessage(STATE_USB_CONNECTING)?.sendToTarget()
