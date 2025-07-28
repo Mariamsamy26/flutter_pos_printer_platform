@@ -1,26 +1,15 @@
 package com.sersoluciones.flutter_pos_printer_platform
 
-import android.Manifest
 import android.app.Activity
-import android.bluetooth.BluetoothAdapter
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.NonNull
-import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.startActivityForResult
-import com.sersoluciones.flutter_pos_printer_platform.bluetooth.BluetoothConnection
-import com.sersoluciones.flutter_pos_printer_platform.bluetooth.BluetoothConstants
 import com.sersoluciones.flutter_pos_printer_platform.bluetooth.BluetoothService
-import com.sersoluciones.flutter_pos_printer_platform.bluetooth.BluetoothService.Companion.TAG
 import com.sersoluciones.flutter_pos_printer_platform.usb.USBPrinterService
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -36,7 +25,7 @@ import io.flutter.plugin.common.BinaryMessenger
 class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.RequestPermissionsResultListener,
     PluginRegistry.ActivityResultListener, ActivityAware {
 
-    private final var TAG = "FlutterPosPrinterPlatformPlugin"
+    private val TAG = "FlutterPosPrinterPlatformPlugin"
 
     private var binaryMessenger: BinaryMessenger? = null
     private var channel: MethodChannel? = null
@@ -70,10 +59,9 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodCallHandler, Plugin
             "connectPrinter" -> {
                 val vendor: Int? = call.argument("vendor")
                 val product: Int? = call.argument("product")
-                val deviceId: String? = call.argument("deviceId")
-                connectPrinterWithAddress(vendor, product, deviceId, result)
+                val deviceAddress: String? = call.argument("deviceId")
+                connectPrinterWithAddress(vendor, product, deviceAddress, result)
             }
-            // keep all other calls the same...
             else -> result.notImplemented()
         }
     }
@@ -87,28 +75,39 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodCallHandler, Plugin
 
         if (!deviceAddress.isNullOrBlank()) {
             targetDevice = deviceList.firstOrNull { it.deviceName == deviceAddress }
+            Log.d(TAG, "Trying to connect by full address: $deviceAddress, found: ${targetDevice != null}")
         }
 
         if (targetDevice == null && vendorId != null && productId != null) {
             targetDevice = deviceList.firstOrNull { it.vendorId == vendorId && it.productId == productId }
+            Log.d(TAG, "Fallback to vendor/product search: $vendorId/$productId, found: ${targetDevice != null}")
         }
 
         if (targetDevice != null) {
-            if (!adapter.selectDevice(targetDevice.vendorId, targetDevice.productId)) {
-                result.success(false)
-            } else {
-                result.success(true)
-            }
+            val success = adapter.selectDeviceByName(targetDevice.deviceName)
+            result.success(success)
         } else {
-            result.error("USB_DEVICE_NOT_FOUND", "No USB device found with given vendor/product ID or device address", null)
+            result.error("USB_DEVICE_NOT_FOUND", "No USB device found with given address or vendor/product", null)
         }
     }
 
-    // other methods stay unchanged
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        this.context = binding.applicationContext
+        this.binaryMessenger = binding.binaryMessenger
+    }
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        this.currentActivity = binding.activity
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {}
+    override fun onDetachedFromActivityForConfigChanges() {}
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {}
+    override fun onDetachedFromActivity() {}
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean = false
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean = false
 
     companion object {
-        const val PERMISSION_ALL = 1
-        const val PERMISSION_ENABLE_BLUETOOTH = 999
         const val methodChannel = "com.sersoluciones.flutter_pos_printer_platform"
         const val eventChannelBT = "com.sersoluciones.flutter_pos_printer_platform/bt_state"
         const val eventChannelUSB = "com.sersoluciones.flutter_pos_printer_platform/usb_state"
