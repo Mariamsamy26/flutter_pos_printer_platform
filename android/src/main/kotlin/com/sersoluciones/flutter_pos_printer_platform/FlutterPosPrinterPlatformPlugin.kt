@@ -82,7 +82,7 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodChannel.MethodCallH
 
     if (!deviceAddress.isNullOrBlank()) {
         // ✅ هنا التعديل الصحيح
-        targetDevice = deviceList.firstOrNull { it.deviceName == deviceAddress }
+        targetDevice = deviceList.firstOrNull { it.deviceId == deviceAddress }
     }
 
     if (targetDevice == null && vendorId != null && productId != null) {
