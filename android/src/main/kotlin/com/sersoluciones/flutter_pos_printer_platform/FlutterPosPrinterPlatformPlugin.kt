@@ -81,11 +81,11 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodChannel.MethodCallH
         var targetDevice: UsbDevice? = null
 
         if (!deviceAddress.isNullOrBlank()) {
-            targetDevice = deviceList.firstOrNull { it.deviceName == deviceAddress }
+            targetDevice = deviceList.firstOrNull { it.deviceId == deviceAddress }
         }
 
         if (targetDevice == null && vendorId != null && productId != null) {
-            targetDevice = deviceList.firstOrNull { it.vendorId == vendorId && it.productId == productId }
+            targetDevice = deviceList.firstOrNull { it.vendorId == vendorId && it.productId == productId && it.deviceId == deviceAddress }
         }
 
         if (targetDevice != null) {
