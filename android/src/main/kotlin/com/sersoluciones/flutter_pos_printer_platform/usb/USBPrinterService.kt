@@ -94,25 +94,35 @@ class USBPrinterService private constructor(private var mHandler: Handler?) {
             return ArrayList(mUSBManager!!.deviceList.values)
         }
 
-    fun selectDevice(vendorId: Int, productId: Int): Boolean {
-        synchronized(printLock) {
-            closeConnectionIfExists()
-            val usbDevices: List<UsbDevice> = deviceList
-            usbDevices.forEach {
-                Log.d(LOG_TAG, "🔍 Device: ${it.deviceName} | Vendor=${it.vendorId} | Product=${it.productId}")
-            }
-            for (usbDevice: UsbDevice in usbDevices) {
-                if ((usbDevice.vendorId == vendorId) && (usbDevice.productId == productId)) {
-                    Log.v(LOG_TAG, "Request for device: vendor_id=${usbDevice.vendorId}, product_id=${usbDevice.productId}")
-                    mUSBManager!!.requestPermission(usbDevice, mPermissionIndent)
-                    state = STATE_USB_CONNECTING
-                    mHandler?.obtainMessage(STATE_USB_CONNECTING)?.sendToTarget()
-                    return true
-                }
-            }
-            return false
+fun selectDevice(vendorId: Int?, productId: Int?, deviceId: String?): Boolean {
+    synchronized(printLock) {
+        closeConnectionIfExists()
+        val usbDevices: List<UsbDevice> = deviceList
+
+        var target: UsbDevice? = null
+
+        // 🟡 لو عندك address، خده مباشرة
+        if (!deviceId.isNullOrEmpty()) {
+            target = usbDevices.firstOrNull { it.deviceId == deviceId }
+        }
+
+        // 🔵 fallback إلى vendor/product ID
+        if (target == null && vendorId != null && productId != null && deviceId != null ) {
+            target = usbDevices.firstOrNull { it.vendorId == vendorId && it.productId == productId && it.deviceId == deviceId}
+        }
+
+        return if (target != null) {
+            Log.v(LOG_TAG, "✅ Request for device: address=${target.deviceId}, vendor_id=${target.vendorId}, product_id=${target.productId}")
+            mUSBManager!!.requestPermission(target, mPermissionIndent)
+            state = STATE_USB_CONNECTING
+            mHandler?.obtainMessage(STATE_USB_CONNECTING)?.sendToTarget()
+            true
+        } else {
+            false
         }
     }
+}
+
 
     fun selectDeviceByName(deviceName: String): Boolean {
         synchronized(printLock) {

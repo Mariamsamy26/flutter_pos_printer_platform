@@ -74,17 +74,17 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodCallHandler, Plugin
         var targetDevice: UsbDevice? = null
 
         if (!deviceAddress.isNullOrBlank()) {
-            targetDevice = deviceList.firstOrNull { it.deviceName == deviceAddress }
+            targetDevice = deviceList.firstOrNull { it.deviceId == deviceAddress }
             Log.d(TAG, "Trying to connect by full address: $deviceAddress, found: ${targetDevice != null}")
         }
 
-        if (targetDevice == null && vendorId != null && productId != null) {
-            targetDevice = deviceList.firstOrNull { it.vendorId == vendorId && it.productId == productId }
+        if (targetDevice == null && vendorId != null && productId != null&& deviceId!= null) {
+            targetDevice = deviceList.firstOrNull { it.vendorId == vendorId && it.productId == productId && it.deviceId == deviceId}
             Log.d(TAG, "Fallback to vendor/product search: $vendorId/$productId, found: ${targetDevice != null}")
         }
 
         if (targetDevice != null) {
-            val success = adapter.selectDeviceByName(targetDevice.deviceName)
+            val success = adapter.selectDevice(targetDevice.vendorId,targetDevice.productId,targetDevice.deviceId)
             result.success(success)
         } else {
             result.error("USB_DEVICE_NOT_FOUND", "No USB device found with given address or vendor/product", null)
