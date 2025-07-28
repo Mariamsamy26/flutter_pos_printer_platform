@@ -103,7 +103,11 @@ fun selectDevice(vendorId: Int?, productId: Int?, deviceId: String?): Boolean {
 
         // 🟡 لو عندك address، خده مباشرة
         if (!deviceId.isNullOrEmpty()) {
-            target = usbDevices.firstOrNull { it.deviceId == deviceId }
+            target = usbDevices.firstOrNull { it.deviceId == deviceId } ?: run {
+                Log.e(LOG_TAG, "❌ No USB device found with address: $deviceId")
+                return false
+            }
+            // target = usbDevices.firstOrNull { it.deviceId == deviceId }
         }
 
         // 🔵 fallback إلى vendor/product ID

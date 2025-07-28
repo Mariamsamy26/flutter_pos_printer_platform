@@ -87,7 +87,7 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodChannel.MethodCallH
 
     if (targetDevice == null && vendorId != null && productId != null) {
         targetDevice = deviceList.firstOrNull {
-            it.vendorId == vendorId && it.productId == productId
+            it.vendorId == vendorId && it.productId == productId && it.deviceId == deviceAddress
         }
     }
 
