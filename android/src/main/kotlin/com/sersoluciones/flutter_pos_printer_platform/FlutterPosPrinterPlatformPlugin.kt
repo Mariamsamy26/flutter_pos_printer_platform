@@ -75,27 +75,31 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodChannel.MethodCallH
     }
 
     private fun connectPrinterWithAddress(vendorId: Int?, productId: Int?, deviceAddress: String?, result: MethodChannel.Result) {
-        val usbManager = context?.getSystemService(Context.USB_SERVICE) as UsbManager
-        val deviceList = usbManager.deviceList.values
+    val usbManager = context?.getSystemService(Context.USB_SERVICE) as UsbManager
+    val deviceList = usbManager.deviceList.values
 
-        var targetDevice: UsbDevice? = null
+    var targetDevice: UsbDevice? = null
 
-        if (!deviceAddress.isNullOrBlank()) {
-            targetDevice = deviceList.firstOrNull { it.deviceId == deviceAddress }
-        }
+    if (!deviceAddress.isNullOrBlank()) {
+        // ✅ هنا التعديل الصحيح
+        targetDevice = deviceList.firstOrNull { it.deviceName == deviceAddress }
+    }
 
-        if (targetDevice == null && vendorId != null && productId != null) {
-            targetDevice = deviceList.firstOrNull { it.vendorId == vendorId && it.productId == productId && it.deviceId == deviceAddress }
-        }
-
-        if (targetDevice != null) {
-            adapter.setHandler(usbHandler)
-            val connected = adapter.connect(targetDevice)
-            result.success(connected)
-        } else {
-            result.error("USB_DEVICE_NOT_FOUND", "No USB device found", null)
+    if (targetDevice == null && vendorId != null && productId != null) {
+        targetDevice = deviceList.firstOrNull {
+            it.vendorId == vendorId && it.productId == productId
         }
     }
+
+    if (targetDevice != null) {
+        adapter.setHandler(usbHandler)
+        val connected = adapter.connect(targetDevice)
+        result.success(connected)
+    } else {
+        result.error("USB_DEVICE_NOT_FOUND", "No USB device found", null)
+    }
+}
+
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel?.setMethodCallHandler(null)
