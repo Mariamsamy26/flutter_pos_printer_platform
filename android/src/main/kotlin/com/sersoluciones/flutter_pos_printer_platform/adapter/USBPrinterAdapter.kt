@@ -87,27 +87,24 @@ class USBPrinterAdapter private constructor() {
             return ArrayList(mUSBManager!!.deviceList.values)
         }
 
-    fun selectDevice(vendorId: Int, productId: Int, deviceId: String): Boolean {
-        if ((mUsbDevice == null) || (mUsbDevice!!.vendorId != vendorId) || (mUsbDevice!!.productId != productId)|| (mUsbDevice!!.deviceId != deviceId)) {
-            synchronized(printLock) {
-                closeConnectionIfExists()
-                val usbDevices: List<UsbDevice> = deviceList
-                for (usbDevice: UsbDevice in usbDevices) {
-                    if ((usbDevice.vendorId == vendorId) && (usbDevice.productId == productId)&& (usbDevice.deviceId == deviceId)) {
-                        Log.v(
-                            LOG_TAG,
-                            "Request for device: vendor_id: " + usbDevice.vendorId + ", product_id: " + usbDevice.productId+ ", device_id: " + usbDevice.deviceId
-                        )
-                        closeConnectionIfExists()
-                        mUSBManager!!.requestPermission(usbDevice, mPermissionIndent)
-                        return true
-                    }
-                }
-                return false
+fun selectDevice(vendorId: Int, productId: Int, deviceName: String?): Boolean {
+    synchronized(printLock) {
+        closeConnectionIfExists()
+        val usbDevices: List<UsbDevice> = deviceList
+        for (usbDevice: UsbDevice in usbDevices) {
+            val devName = mUSBManager!!.getDeviceName(usbDevice)
+            if ((usbDevice.vendorId == vendorId) &&
+                (usbDevice.productId == productId) &&
+                (deviceName == null || devName == deviceName)
+            ) {
+                Log.v(LOG_TAG, "Request for device: vendor_id: ${usbDevice.vendorId}, product_id: ${usbDevice.productId}, full address: $devName")
+                mUSBManager!!.requestPermission(usbDevice, mPermissionIndent)
+                return true
             }
         }
-        return true
+        return false
     }
+}
 
     private fun openConnection(): Boolean {
         if (mUsbDevice == null) {
