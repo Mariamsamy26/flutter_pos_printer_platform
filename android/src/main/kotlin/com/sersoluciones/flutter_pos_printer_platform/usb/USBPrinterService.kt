@@ -38,7 +38,7 @@ class USBPrinterService private constructor(private var mHandler: Handler?) {
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         Log.i(
                             LOG_TAG,
-                            "✅ Success get permission for device ${usbDevice?.deviceId}, vendor_id: ${usbDevice?.vendorId} product_id: ${usbDevice?.productId}"
+                            "✅ Success get permission for device ${usbDevice?.deviceId}, vendor_id: ${usbDevice?.vendorId} product_id: ${usbDevice?.productId} address_id: ${usbDevice?.deviceId}"
                         )
                         mUsbDevice = usbDevice
                         state = STATE_USB_CONNECTED
@@ -94,7 +94,7 @@ class USBPrinterService private constructor(private var mHandler: Handler?) {
             return ArrayList(mUSBManager!!.deviceList.values)
         }
 
-fun selectDevice(vendorId: Int?, productId: Int?, deviceId: String?): Boolean {
+fun selectDevice(vendorId: Int?, productId: Int?, deviceId: String?,): Boolean {
     synchronized(printLock) {
         closeConnectionIfExists()
         val usbDevices: List<UsbDevice> = deviceList
@@ -133,7 +133,7 @@ fun selectDevice(vendorId: Int?, productId: Int?, deviceId: String?): Boolean {
             closeConnectionIfExists()
             val usbDevices: List<UsbDevice> = deviceList
             usbDevices.forEach {
-                Log.d(LOG_TAG, "🔍 Device: ${it.deviceName} | Vendor=${it.vendorId} | Product=${it.productId}")
+                Log.d(LOG_TAG, "🔍 Device: ${it.deviceName} | Vendor=${it.vendorId} | Product=${it.productId}| address=${it.deviceId}")
             }
             for (usbDevice in usbDevices) {
                 if (usbDevice.deviceName == deviceName) {
