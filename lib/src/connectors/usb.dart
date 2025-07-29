@@ -9,13 +9,24 @@ class UsbPrinterInput extends BasePrinterInput {
   final String? vendorId;
   final String? productId;
   final String? deviceId;
+  final String? deviceName; // الجديد لدعم التوافق
 
   UsbPrinterInput({
     this.name,
     this.vendorId,
     this.productId,
     this.deviceId,
+    this.deviceName,
   });
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'vendorId': vendorId,
+        'productId': productId,
+        'deviceId': deviceId,
+        'deviceName': deviceName,
+      };
 }
 
 class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
@@ -102,7 +113,9 @@ class UsbPrinterConnector implements PrinterConnector<UsbPrinterInput> {
       final params = {
         "vendor": int.tryParse(vendorId) ?? 0,
         "product": int.tryParse(productId) ?? 0,
-        "deviceId": deviceId, // must be full path like /dev/bus/usb/007/002
+        "deviceId": deviceId,
+        "deviceName":
+            model?.deviceName, 
       };
 
       return await flutterPrinterChannel.invokeMethod('connectPrinter', params);
